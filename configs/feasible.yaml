@@ -1,0 +1,40 @@
+# Objective to optimize for.  Can be `feasible` or `exact_finish_time`.
+objective: 'feasible'
+
+# Algorithm to use for optimization.
+algorithm: 'jade'
+
+# Script to be modified.  Note the file isn't updated.  This script should be in
+# your joequake/tas/ directory.
+tas_script: "test_e1m1_only"
+
+# Maximum number of frames to run per play-through, in the event that the finish
+# is not hit.
+num_frames: 1370
+
+# Number of frame parameters and number of yaw parameters.  The last <n>
+# parameters in the script will be changed.
+num_frame_params: 10
+num_yaw_params: 11
+
+# Bounds on yaw/frame parameters
+yaw_bounds: 45
+frame_bounds: 10
+
+# Initial population will be picked according to a normal distribution with mean
+# matching the input script, and normal as defined below.
+init_yaw_scale: .01
+init_frame_scale: 0.01
+
+# Population will be (num_frame_params + num_yaw_params) * pop_size
+pop_size: 15
+
+# Whether frame parameters should be relative to the previous frame, or
+# absolute.
+delta_frames: False
+
+# Maximum number of game playthroughs before terminating the optimization.
+max_evals: 100000000
+
+# Number of libtasquake processes to spawn.
+num_workers: 16

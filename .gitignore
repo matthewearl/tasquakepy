@@ -1,0 +1,8 @@
+*.swp
+build/
+*.c
+*.so
+__pycache__
+tasquakepy.egg-info/
+runs/
+wandb/
