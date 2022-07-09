@@ -2,8 +2,6 @@
 
 This is the source code behind my improving Quake TAS video:
 
-[YouTube video](https://www.youtube.com/watch?v=H8sDdEKizkk)
-
 [![Beating Quake faster with evolutionary algorithms](https://img.youtube.com/vi/H8sDdEKizkk/0.jpg)](https://www.youtube.com/watch?v=H8sDdEKizkk)
 
 Once setup, you should be able to reproduce the run from the video.
@@ -11,8 +9,9 @@ Once setup, you should be able to reproduce the run from the video.
 ## Installation
 
 1. Install [libtasquake](https://github.com/matthewearl/TASQuake/blob/me/lib/LIB.md).
+The rest of this readme assumes libtasquake is installed in `~/TASQuake/`.
 
-2. Setup a virtualenv, and then run:
+2. Setup a virtualenv, and then run to install tasquakepy (this repo):
 ```bash
 git clone git@github.com:matthewearl/tasquakepy.git
 pip install Cython
@@ -26,6 +25,9 @@ git clone git@github.com:matthewearl/pyade.git
 pip install -e pyade
 ```
 
+This contains some fixes to a few of the DE algorithms, as well as an option for
+providing a vectorized objective function.
+
 4. Install [quake-light from SDA](https://speeddemosarchive.com/quake/downloads/quake-light.zip).
 you may wish to install into a RAM disk (eg. `/dev/shm`) to avoid excessive disk
 reads.  The only files you actually need are:
@@ -35,18 +37,20 @@ bcbf5ad90f8664dcef0fd7f168a2a613e4cbedf50c4fb2ff34612acd1145facd  /dev/shm/quake
 e1b21d8273721ab3fcbeadabbebb6dcd5c42e707205cf27d49f1668ef717249f  /dev/shm/quake/id1/pak0.pak
 ```
 
-The input script you want to modify should also be in
-`/dev/quake/joequake/tas/`.
+The above are sha256 sums, which you might also want to check.  The input script
+you want to modify should also be in `/dev/quake/joequake/tas/`.
 
 
 ## Optimizing a run
 
-This should (with some luck) reproduce the parameters seen in the video.
+This section should (with some luck) reproduce the parameters seen in the video.
 
 1. Optionally [configure wandb](https://docs.wandb.ai/ref/cli/wandb-init).
 
 
-2. Modify `config.yaml` with whatever settings you want. 
+2. Modify `configs/{feasible,finish}.yaml` with whatever settings you want.  To
+   reproduce the parameters from the video leave it as is, but you might want to
+   change the `num_workers` option to match your CPU.
 
 3. Find a good initial population for the main solve:
 
