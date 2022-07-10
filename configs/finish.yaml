@@ -38,3 +38,7 @@ max_evals: 100000000
 
 # Number of libtasquake processes to spawn.
 num_workers: 16
+
+# Extra options for the relevant pyade algorithm.
+pyade_params:
+    accept_equal: True
