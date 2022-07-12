@@ -2,7 +2,7 @@
 
 This is the source code behind my improving Quake TAS video:
 
-[![Beating Quake faster with evolutionary algorithms](https://img.youtube.com/vi/H8sDdEKizkk/0.jpg)](https://www.youtube.com/watch?v=H8sDdEKizkk)
+[![Beating Quake faster with evolutionary algorithms](https://img.youtube.com/vi/H8sDdEKizkk/maxresdefault.jpg)](https://www.youtube.com/watch?v=H8sDdEKizkk)
 
 Once setup, you should be able to reproduce the run from the video.
 
