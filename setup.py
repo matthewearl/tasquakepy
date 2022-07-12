@@ -33,6 +33,7 @@ setup(
             "opttasquake_solve = tasquakepy.opt:solve_entrypoint",
             "opttasquake_save_script = tasquakepy.opt:save_script_entrypoint",
             "opttasquake_fps_trick = tasquakepy.fpstrick:apply_fps_trick_entry_point",
+            "opttasquake_benchmark = tasquakepy.benchmark:benchmark_entrypoint",
         ]
     },
     description="Python wrapper around libtasquake",
