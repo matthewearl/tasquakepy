@@ -39,7 +39,7 @@ cdef extern from "<dlfcn.h>" nogil:
         RTLD_LAZY
 
 
-ctypedef void (*start_host_fn_t)(int argc, char *argv[])
+ctypedef void (*start_host_fn_t)(unsigned int instance_id, int argc, char *argv[])
 ctypedef void (*add_command_fn_t)(const char *command)
 ctypedef void (*add_key_event_fn_t)(int key, int down)
 ctypedef void (*add_mouse_motion_fn_t)(int dx, int dy)
@@ -136,7 +136,7 @@ cdef class QuakeCy:
             self.ref = NULL
             PyMem_Free(self.argv)
 
-    def start_host(self, list args):
+    def start_host(self, unsigned int instance_id, list args):
         args = ['quake-binary-placeholder'] + args
         cdef int argc = len(args)
         assert self.argv == NULL
@@ -147,7 +147,7 @@ cdef class QuakeCy:
         for i in range(argc):
             self.argv[i] = self.args_bytes[i]
 
-        self.start_host_fn(argc, self.argv)
+        self.start_host_fn(instance_id, argc, self.argv)
 
     def add_command(self, str command):
         command = command + "\n"

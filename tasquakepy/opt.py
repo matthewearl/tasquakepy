@@ -37,7 +37,7 @@ MAXFPS_CVAR = "cl_maxfps"
 def _get_qlib(library_path, base_dir):
     if not hasattr(THREAD_LOCAL_DATA, 'quake'):
         logger.info(f"Loading {library_path} {THREAD_LOCAL_DATA} {threading.get_ident()}")
-        THREAD_LOCAL_DATA.quake = qlib.Quake(library_path, base_dir)
+        THREAD_LOCAL_DATA.quake = qlib.Quake(threading.get_ident(), library_path, base_dir)
     return THREAD_LOCAL_DATA.quake
 
 

@@ -75,12 +75,13 @@ class BlockSeq(collections.abc.Sequence):
 
 
 class Quake:
-    def __init__(self, library_path, base_dir=None):
+    def __init__(self, instance_id, library_path, base_dir=None):
         self._quake_cy = QuakeCy(library_path)
 
         if base_dir is None:
             base_dir = os.path.expanduser('~/.quakespasm')
-        self._quake_cy.start_host(['-noudp', '-protocol', '15', '-basedir', base_dir])
+        self._quake_cy.start_host(instance_id, ['-noudp', '-protocol', '15',
+                                                '-basedir', base_dir])
         self._key_state = None
         self._current_map_name = None
         self.completed_time = None
