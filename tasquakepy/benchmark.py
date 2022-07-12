@@ -1,3 +1,4 @@
+import argparse
 import itertools
 import logging
 import multiprocessing
@@ -14,12 +15,12 @@ THREAD_LOCAL_DATA = threading.local()
 def _get_qlib(library_path, base_dir):
     if not hasattr(THREAD_LOCAL_DATA, 'quake'):
         logger.info(f"Loading {library_path} {THREAD_LOCAL_DATA} {threading.get_ident()}")
-        THREAD_LOCAL_DATA.quake = qlib.Quake(threading.get_ident(), library_path, base_dir)
+        THREAD_LOCAL_DATA.quake = qlib.Quake(threading.get_native_id(), library_path, base_dir)
     return THREAD_LOCAL_DATA.quake
 
 
 def run_tas_script(args):
-    q = qlib.Quake(args.library_path, args.base_dir)
+    q = _get_qlib(args.library_path, args.base_dir)
     q.load_tas_script(args.script)
     q.play_tas_script()
     num_frames_local = 0
@@ -35,13 +36,12 @@ def run_tas_script(args):
         num_frames.value += num_frames_local
         num_frames_val = num_frames.value
 
-    if num_games.value % 100 == 0:
+    if num_games_val % 100 == 0:
         time_elapsed = time.perf_counter() - start_time
         gps = num_games_val / time_elapsed
         fps = num_frames_val / time_elapsed
-        print(f'#games: {cval}, games per second: {gps:.3f}, '
-              f'frames per second: {fps:.3f}, '
-              f'speedup: {fps / 72:.2f}x')
+        print(f'#games: {num_games_val}, games per second: {gps:.3f}, '
+              f'frames per second: {fps:.3f} speedup: {fps / 72:.2f}x')
 
 
 def benchmark_entrypoint():
@@ -53,7 +53,8 @@ def benchmark_entrypoint():
     parser.add_argument('--library-path', '-l', type=str, help='Path to libtasquake.so.')
     parser.add_argument('--base-dir', '-b', type=str, help='Quake base dir.')
     parser.add_argument('--script', '-s', type=str, help='TAS script.')
-    parser.add_argument('--num-games', '-n', type=int, help='Number of games to simulate.')
+    parser.add_argument('--num-games', '-n', type=int, default=10_000,
+                        help='Number of games to simulate.')
     parser.add_argument('--jobs', '-j', type=int, help='Process pool size')
     args = parser.parse_args()
 
