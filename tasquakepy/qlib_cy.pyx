@@ -56,6 +56,7 @@ ctypedef void (*set_block_frames_fn_t)(int *frames);
 ctypedef int (*block_has_cvar_fn_t)(int block_num, char *name);
 ctypedef float (*block_get_cvar_fn_t)(int block_num, char *name);
 ctypedef void (*block_set_cvar_fn_t)(int block_num, char *name, float value);
+ctypedef void (*get_playback_state_fn_t)(int *block_num, int *frame_num);
 
 cdef _vec3_to_tuple(float v[3]):
     return tuple(v[i] for i in range(3))
@@ -96,6 +97,7 @@ cdef class QuakeCy:
     cdef block_has_cvar_fn_t block_has_cvar_fn
     cdef block_get_cvar_fn_t block_get_cvar_fn
     cdef block_set_cvar_fn_t block_set_cvar_fn
+    cdef get_playback_state_fn_t get_playback_state_fn
     cdef add_command_fn_t add_command_fn
 
     cdef list args_bytes
@@ -127,6 +129,7 @@ cdef class QuakeCy:
         self.block_has_cvar_fn = <block_has_cvar_fn_t> dlsym(self.ref, "block_has_cvar")
         self.block_get_cvar_fn = <block_get_cvar_fn_t> dlsym(self.ref, "block_get_cvar")
         self.block_set_cvar_fn = <block_set_cvar_fn_t> dlsym(self.ref, "block_set_cvar")
+        self.get_playback_state_fn = <get_playback_state_fn_t> dlsym(self.ref, "get_playback_state")
 
         self.argv = NULL
 
@@ -217,6 +220,13 @@ cdef class QuakeCy:
 
     def block_set_cvar(self, int block_num, str name, float value):
         return self.block_set_cvar_fn(block_num, name.encode('utf-8'), value)
+
+    def get_playback_state(self):
+        cdef:
+            int block_num
+            int frame_num
+        self.get_playback_state_fn(&block_num, &frame_num)
+        return (block_num, frame_num)
 
     def get_block_command(self, int block_num, int command_num):
         return self.get_block_command_fn(block_num, command_num)

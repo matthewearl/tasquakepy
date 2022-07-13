@@ -23,7 +23,7 @@ import collections.abc
 import dataclasses
 import enum
 import os
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 
@@ -184,19 +184,49 @@ class Quake:
     def set_block_frames(self, frames: np.ndarray):
         self._quake_cy.set_block_frames(frames)
 
-    def play_tas_script(self, block_num: Optional[int] = None, save_state: bool = False):
+    def play_tas_script(self, block_num: Optional[int] = None,
+                        save_state: bool = False):
+        """Play a TAS script.
+
+        Either start at the start of the script, or skip to a given block.  In
+        the former case, the next frame returned will be the first with a valid
+        position.  In the latter case, the next frame returned will be the last
+        frame of the block preceding the given block.
+
+        Arguments:
+            block_num:  Block number to skip to. If not provided, start the
+                script from the beginning.
+            save_state: Make a save state after skipping to the given block.
+                Does nothing if `block_num` is not provided.
+
+        """
         if block_num is not None:
             self._quake_cy.add_command(f'tas_script_skip_block {int(block_num)}')
-            self._quake_cy.do_frame()
 
-            if save_state:
+            # Repeatedly call until playback frame stops increasing
+            num_skipped = 0
+            frame_num, prev_frame_num = None, None
+            while prev_frame_num is None or frame_num != prev_frame_num:
+                self._quake_cy.do_frame()
+                prev_frame_num = frame_num
+                _, frame_num = self._quake_cy.get_playback_state()
+                num_skipped += 1
+            print(f'{num_skipped=}')
+
+            # When loading from a save state a few frames need to be skipped in
+            # order to fully load everything.
+            for _ in range(8):
+                self._quake_cy.do_frame()
+
+            # Save the state if required, and we haven't done so already.
+            if num_skipped > 2 and save_state:
                 self._quake_cy.add_command('tas_savestate')
                 self._quake_cy.do_frame()
+
             self._quake_cy.add_command('tas_script_advance_end')
-            # TODO: Check that we have a valid position on next `do_frame`.  If not 
         else:
             self._quake_cy.add_command('tas_script_play')
-            for _ in range(3):
+            for _ in range(0):
                 self._quake_cy.do_frame()
 
         self._key_state = {k: False for k in Key}

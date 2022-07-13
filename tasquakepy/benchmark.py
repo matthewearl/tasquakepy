@@ -22,7 +22,7 @@ def _get_qlib(library_path, base_dir):
 def run_tas_script(args):
     q = _get_qlib(args.library_path, args.base_dir)
     q.load_tas_script(args.script)
-    q.play_tas_script()
+    q.play_tas_script(block_num=39, save_state=True)
     num_frames_local = 0
     while q.exact_completed_time is None:
         _ = q.step_no_cmd()
