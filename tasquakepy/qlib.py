@@ -184,10 +184,20 @@ class Quake:
     def set_block_frames(self, frames: np.ndarray):
         self._quake_cy.set_block_frames(frames)
 
-    def play_tas_script(self):
-        self._quake_cy.add_command('tas_script_play')
-        for _ in range(3):
+    def play_tas_script(self, block_num: Optional[int] = None, save_state: bool = False):
+        if block_num is not None:
+            self._quake_cy.add_command(f'tas_script_skip_block {int(block_num)}')
             self._quake_cy.do_frame()
+
+            if save_state:
+                self._quake_cy.add_command('tas_savestate')
+                self._quake_cy.do_frame()
+            self._quake_cy.add_command('tas_script_advance_end')
+            # TODO: Check that we have a valid position on next `do_frame`.  If not 
+        else:
+            self._quake_cy.add_command('tas_script_play')
+            for _ in range(3):
+                self._quake_cy.do_frame()
 
         self._key_state = {k: False for k in Key}
         self.completed_time = None
@@ -196,16 +206,3 @@ class Quake:
     def stop_tas_script(self):
         self._quake_cy.add_command('tas_script_stop')
         self._quake_cy.do_frame()
-
-    def run_tas_script(self, max_frames: int):
-        self._quake_cy.add_command('tas_script_play')
-        for _ in range(3):
-            self._quake_cy.do_frame()
-
-        for frame_num in range(max_frames):
-            self._quake_cy.do_frame()
-            intermission, completed_time, exact_completed_time = self._quake_cy.check_intermission()
-            if completed_time:
-                break
-        return frame_num, intermission, completed_time, exact_completed_time
-
