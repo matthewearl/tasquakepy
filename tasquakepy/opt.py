@@ -37,7 +37,7 @@ MAXFPS_CVAR = "cl_maxfps"
 def _get_qlib(library_path, base_dir):
     if not hasattr(THREAD_LOCAL_DATA, 'quake'):
         logger.info(f"Loading {library_path} {THREAD_LOCAL_DATA} {threading.get_ident()}")
-        THREAD_LOCAL_DATA.quake = qlib.Quake(threading.get_ident(), library_path, base_dir)
+        THREAD_LOCAL_DATA.quake = qlib.Quake(threading.get_native_id(), library_path, base_dir)
     return THREAD_LOCAL_DATA.quake
 
 
@@ -144,7 +144,16 @@ class TasOpt:
         q = _get_qlib(self.library_path, self.base_dir)
         self._setup_script(q, params)
 
-        q.play_tas_script()
+        if cfg.get('skip', False):
+            # Work out where to skip to, and skip to it.
+            skip_frame = min(
+                self._block_frames[self._yaw_block_nums[0]],
+                self._block_frames[-cfg['num_frame_params'] - 1]
+            )
+            q.play_tas_script(skip_frame, save_state=True)
+        else:
+            # Otherwise just play from the start
+            q.play_tas_script()
 
         for _ in range(cfg['num_frames']):
             _ = q.step_no_cmd()
