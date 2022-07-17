@@ -42,3 +42,6 @@ num_workers: 16
 # Extra options for the relevant pyade algorithm.
 pyade_params:
     accept_equal: True
+
+# Use save states to avoid repeating the start of the run.
+skip: True
