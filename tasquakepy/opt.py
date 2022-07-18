@@ -1,4 +1,5 @@
 import argparse
+import concurrent.futures
 import dataclasses
 import json
 import logging
@@ -9,6 +10,7 @@ import threading
 from typing import Optional
 
 import matplotlib.pyplot as plt
+import nevergrad as ng
 import numpy as np
 import pyade.ilshade
 import pyade.jade
@@ -182,6 +184,13 @@ class TasOpt:
     def _vector_objective(self, population, opts):
         return np.array(opts['pool'].map(self._objective, population))
 
+    def _ng_objective(self, normed_params):
+        params = normed_params * self._std + self._mean
+        value = self._objective(params)
+        if np.isinf(value):
+            value = 25
+        return value
+
     def _load_script(self):
         """Load the configured tas script, and return the parameters within it"""
         cfg = self.cfg
@@ -291,6 +300,47 @@ class TasOpt:
                 )
                 best_params = res.x
                 print(res)
+            elif cfg['algorithm'] == 'nevergrad':
+                vals = np.array([self._objective(params) for params in init])
+                logger.info('best initial population member: %s', np.min(vals))
+
+                num_evals = 0
+                best_value = np.inf
+                best_params = None
+                rolling_mean = 0.
+                def print_candidate_and_value(optimizer, candidate, value):
+                    nonlocal num_evals, best_value, best_params, rolling_mean
+
+                    gamma = 1e-3
+                    rolling_mean += (value - rolling_mean) * gamma
+
+                    if value < best_value:
+                        best_value = value
+                        best_params = candidate * self._std + self._mean
+
+                    if num_evals % 1_000 == 0:
+                        log_dict = {'min_energy': best_value, 'evals': num_evals, 'rolling_mean': rolling_mean}
+                        print(f'{best_params=}')
+                        print(log_dict)
+                        wandb.log(log_dict)
+
+                    num_evals += 1
+
+                optimizer = ng.optimizers.CMA(
+                    parametrization=len(base_params),
+                    budget=int(1e6),
+                    num_workers=16,
+                )
+                optimizer.register_callback("tell", print_candidate_and_value)
+
+                self._mean = np.mean(init, axis=0)
+                self._std = np.std(init, axis=0)
+
+                for params in init:
+                    optimizer.suggest(((params - self._mean) / self._std))
+
+                with concurrent.futures.ProcessPoolExecutor(cfg['num_workers']) as pool:
+                    optimizer.minimize(self._ng_objective, executor=pool, verbosity=0)
             else:
                 raise Exception(f"Unknown algorithm {cfg['algorithm']}")
         except KeyboardInterrupt:
