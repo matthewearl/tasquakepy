@@ -116,7 +116,7 @@ def apply_fps_trick_entry_point():
     parser.add_argument('--output-name', '-o', type=str, help='Output script.')
     args = parser.parse_args()
 
-    q = qlib.Quake(args.library_path, args.base_dir)
+    q = qlib.Quake(1, args.library_path, args.base_dir)
 
     offsets = np.arange(-32, 32)
     fpss = np.arange(10, 73)
