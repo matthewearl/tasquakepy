@@ -14,7 +14,7 @@ THREAD_LOCAL_DATA = threading.local()
 
 def _get_qlib(library_path, base_dir):
     if not hasattr(THREAD_LOCAL_DATA, 'quake'):
-        logger.info(f"Loading {library_path} {THREAD_LOCAL_DATA} {threading.get_ident()}")
+        logger.info(f"Loading {library_path} {THREAD_LOCAL_DATA} {threading.get_native_id()}")
         THREAD_LOCAL_DATA.quake = qlib.Quake(threading.get_native_id(), library_path, base_dir)
     return THREAD_LOCAL_DATA.quake
 

@@ -4,6 +4,7 @@ import dataclasses
 import json
 import logging
 import multiprocessing
+import os
 import pathlib
 import pickle
 import threading
@@ -28,19 +29,33 @@ try:
 except ImportError:
     pyswarms = None
 
+
 logger = logging.getLogger(__name__)
-
-
 THREAD_LOCAL_DATA = threading.local()
 YAW_CVAR = "tas_strafe_yaw"
 MAXFPS_CVAR = "cl_maxfps"
 
 
+def _get_thread_data():
+    # Reset thread local data over forks.
+    pid = os.getpid()
+    if getattr(THREAD_LOCAL_DATA, 'pid', None) != pid:
+        THREAD_LOCAL_DATA.pid = pid
+        if hasattr(THREAD_LOCAL_DATA, 'data'):
+            del THREAD_LOCAL_DATA.data
+
+    if not hasattr(THREAD_LOCAL_DATA, 'data'):
+        THREAD_LOCAL_DATA.data = {}
+
+    return THREAD_LOCAL_DATA.data
+        
+
 def _get_qlib(library_path, base_dir):
-    if not hasattr(THREAD_LOCAL_DATA, 'quake'):
-        logger.info(f"Loading {library_path} {THREAD_LOCAL_DATA} {threading.get_ident()}")
-        THREAD_LOCAL_DATA.quake = qlib.Quake(threading.get_native_id(), library_path, base_dir)
-    return THREAD_LOCAL_DATA.quake
+    thread_data = _get_thread_data()
+    if 'quake' not in thread_data:
+        logger.info(f"Loading {library_path} {THREAD_LOCAL_DATA} {threading.get_native_id()}")
+        thread_data['quake'] = qlib.Quake(threading.get_native_id(), library_path, base_dir)
+    return thread_data['quake']
 
 
 @dataclasses.dataclass
@@ -122,17 +137,25 @@ class TasOpt:
                                     params[cfg['num_frame_params']:])
         assert len(yaw_params) == cfg['num_yaw_params']
 
-        q.load_tas_script(cfg['tas_script'])
+        # Only load the script once --- reloading erases save states.
+        thread_data = _get_thread_data()
+        if thread_data.get('loaded_script') != cfg['tas_script']:
+            print(f'loading script {threading.get_native_id()}')
+            q.load_tas_script(cfg['tas_script'])
 
-        # Remove the FPS trick for a fair comparison
-        for bl in reversed(q.blocks):
-            if MAXFPS_CVAR in bl and bl[MAXFPS_CVAR] == 10:
-                bl[MAXFPS_CVAR] = 72
-                break
-        else:
-            raise Exception("FPS trick not found")
+            # Remove the FPS trick for a fair comparison
+            for bl in reversed(q.blocks):
+                if MAXFPS_CVAR in bl and bl[MAXFPS_CVAR] == 10:
+                    logger.info(f'{threading.get_native_id()}: Removed FPS trick from block {bl.block_num}')
+                    bl[MAXFPS_CVAR] = 72
+                    break
+            else:
+                raise Exception("FPS trick not found")
+
+            thread_data['loaded_script'] = cfg['tas_script']
 
         q.set_cvar_vals(YAW_CVAR, self._yaw_block_nums, yaw_params)
+
         new_block_frames = self._block_frames.copy()
         if cfg['delta_frames']:
             frame_params = np.cumsum(frame_params)
@@ -155,10 +178,13 @@ class TasOpt:
             q.play_tas_script(skip_frame, save_state=True)
         else:
             # Otherwise just play from the start
+            skip_frame = 0
             q.play_tas_script()
 
-        for _ in range(cfg['num_frames']):
+        for _ in range(cfg['num_frames'] - skip_frame):
             _ = q.step_no_cmd()
+            if q.exact_completed_time is not None:
+                break
 
         q.stop_tas_script()
 

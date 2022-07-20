@@ -37,7 +37,7 @@ setup(
         ]
     },
     description="Python wrapper around libtasquake",
-    install_requires=["numpy", "matplotlib", "scipy", "wandb", "PyYAML", "tqdm"],
+    install_requires=["numpy", "matplotlib", "scipy", "wandb", "PyYAML", "tqdm", "nevergrad"],
     author="Matt Earl",
     packages=["tasquakepy"],
     ext_modules=cythonize([Extension("tasquakepy.qlib_cy", ["tasquakepy/qlib_cy.pyx"])]),
