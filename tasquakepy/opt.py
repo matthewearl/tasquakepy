@@ -173,7 +173,7 @@ class TasOpt:
             # Work out where to skip to, and skip to it.
             skip_frame = min(
                 self._block_frames[self._yaw_block_nums[0]],
-                self._block_frames[-cfg['num_frame_params'] - 1]
+                self._block_frames[-cfg['num_frame_params'] - 2]
             )
             q.play_tas_script(skip_frame, save_state=True)
         else:
@@ -256,7 +256,7 @@ class TasOpt:
         if init is None:
             init = np.concatenate([
                 base_frames[None, :]
-                    + np.random.normal(scale=cfg['init_frame_scale'],
+                    + 0.5 + np.random.normal(scale=cfg['init_frame_scale'],
                                        size=(cfg['pop_size'] * len(base_params),
                                              len(base_frames))),
                 base_yaw_vals[None, :]
